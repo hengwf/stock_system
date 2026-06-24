@@ -37,8 +37,4 @@ add_executable(quant-server ${SOURCES})
 
 if(WIN32)
     target_link_libraries(quant-server ws2_32 wininet)
-else()
-    find_package(CURL REQUIRED)
-    include_directories(${CURL_INCLUDE_DIRS})
-    target_link_libraries(quant-server ${CURL_LIBRARIES})
 endif()

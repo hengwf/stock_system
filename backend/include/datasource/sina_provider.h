@@ -36,9 +36,6 @@ private:
     std::string httpGet(const std::string& url,
                         const std::string& referer = "");
 
-    std::string httpGetCurl(const std::string& url,
-                            const std::string& referer = "");
-
     bool parseSinaQuote(const std::string& response,
                         const std::vector<std::string>& codes,
                         std::vector<RealtimeQuote>& quotes);

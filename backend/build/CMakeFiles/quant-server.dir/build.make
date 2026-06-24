@@ -252,7 +252,6 @@ quant-server: CMakeFiles/quant-server.dir/src/cache/data_cache.cpp.o
 quant-server: CMakeFiles/quant-server.dir/src/server/http_server.cpp.o
 quant-server: CMakeFiles/quant-server.dir/src/server/api_handler.cpp.o
 quant-server: CMakeFiles/quant-server.dir/build.make
-quant-server: /usr/lib/x86_64-linux-gnu/libcurl.so
 quant-server: CMakeFiles/quant-server.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/workspace/backend/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Linking CXX executable quant-server"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/quant-server.dir/link.txt --verbose=$(VERBOSE)

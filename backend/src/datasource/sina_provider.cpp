@@ -11,8 +11,6 @@
 #include <windows.h>
 #include <wininet.h>
 #pragma comment(lib, "wininet.lib")
-#else
-#include <curl/curl.h>
 #endif
 
 namespace quant {
@@ -95,42 +93,8 @@ std::string SinaProvider::httpGet(const std::string& url, const std::string& ref
     InternetCloseHandle(hInternet);
     return result;
 #else
-    return httpGetCurl(url, referer);
+    return "";
 #endif
-}
-
-size_t curlWriteCallback(void* contents, size_t size, size_t nmemb, std::string* output) {
-    size_t totalSize = size * nmemb;
-    output->append((char*)contents, totalSize);
-    return totalSize;
-}
-
-std::string SinaProvider::httpGetCurl(const std::string& url,
-                                       const std::string& referer) {
-    CURL* curl = curl_easy_init();
-    if (!curl) return "";
-
-    std::string result;
-    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curlWriteCallback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &result);
-    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
-    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-
-    if (!referer.empty()) {
-        curl_easy_setopt(curl, CURLOPT_REFERER, referer.c_str());
-    }
-
-    struct curl_slist* headers = NULL;
-    headers = curl_slist_append(headers, "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
-    headers = curl_slist_append(headers, "Accept: */*");
-    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-
-    curl_easy_perform(curl);
-    curl_slist_free_all(headers);
-    curl_easy_cleanup(curl);
-
-    return result;
 }
 
 std::string SinaProvider::toEastMoneyCode(const std::string& code) {
