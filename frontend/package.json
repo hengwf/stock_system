@@ -1,0 +1,20 @@
+{
+  "name": "quant-stock-selector",
+  "version": "1.0.0",
+  "description": "量化选股工具 - Electron前端",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-packager . 量化选股工具 --platform=win32 --arch=x64 --out=dist --overwrite --ignore=node_modules/electron-packager && xcopy /E /I /Y ..\\backend\\build\\Release\\quant-server.exe dist\\量化选股工具-win32-x64\\resources\\"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-packager": "^17.1.2"
+  },
+  "dependencies": {
+    "echarts": "^5.4.3",
+    "electron-store": "^8.1.0"
+  }
+}
