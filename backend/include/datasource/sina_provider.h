@@ -43,9 +43,17 @@ private:
     bool parseKlineJson(const std::string& response,
                         std::vector<KlineData>& klines);
 
+    bool parseEastMoneyFundFlow(const std::string& response,
+                                FundFlowData& data);
+
+    bool parseEastMoneyFundamental(const std::string& response,
+                                   FundamentalData& data);
+
     std::string normalizeCode(const std::string& code);
 
     std::string toSinaCode(const std::string& code);
+
+    std::string toEastMoneyCode(const std::string& code);
 
     std::string gbkToUtf8(const std::string& gbkStr);
 
