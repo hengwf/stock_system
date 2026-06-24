@@ -46,9 +46,16 @@ struct FundamentalData {
     double debt_ratio = 0.0;
     double goodwill_ratio = 0.0;
     double roe = 0.0;
+    double roa = 0.0;
     double eps = 0.0;
+    double pe = 0.0;
+    double pb = 0.0;
+    double price = 0.0;
     double total_share = 0.0;
     double float_share = 0.0;
+    double market_capital = 0.0;
+    double float_market_capital = 0.0;
+    double turnover_rate = 0.0;
     std::vector<double> deduct_profit_3y;
     std::vector<double> operating_cashflow;
     std::vector<double> gross_margin_trend;

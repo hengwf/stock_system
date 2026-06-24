@@ -36,6 +36,9 @@ private:
     std::string httpGet(const std::string& url,
                         const std::string& referer = "");
 
+    std::string httpGetCurl(const std::string& url,
+                            const std::string& referer = "");
+
     bool parseSinaQuote(const std::string& response,
                         const std::vector<std::string>& codes,
                         std::vector<RealtimeQuote>& quotes);
@@ -43,9 +46,17 @@ private:
     bool parseKlineJson(const std::string& response,
                         std::vector<KlineData>& klines);
 
+    bool parseEastMoneyFundFlow(const std::string& response,
+                                FundFlowData& data);
+
+    bool parseEastMoneyFundamental(const std::string& response,
+                                   FundamentalData& data);
+
     std::string normalizeCode(const std::string& code);
 
     std::string toSinaCode(const std::string& code);
+
+    std::string toEastMoneyCode(const std::string& code);
 
     std::string gbkToUtf8(const std::string& gbkStr);
 

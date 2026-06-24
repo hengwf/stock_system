@@ -11,6 +11,8 @@
 #include <windows.h>
 #include <wininet.h>
 #pragma comment(lib, "wininet.lib")
+#else
+#include <curl/curl.h>
 #endif
 
 namespace quant {
@@ -93,8 +95,61 @@ std::string SinaProvider::httpGet(const std::string& url, const std::string& ref
     InternetCloseHandle(hInternet);
     return result;
 #else
-    return "";
+    return httpGetCurl(url, referer);
 #endif
+}
+
+size_t curlWriteCallback(void* contents, size_t size, size_t nmemb, std::string* output) {
+    size_t totalSize = size * nmemb;
+    output->append((char*)contents, totalSize);
+    return totalSize;
+}
+
+std::string SinaProvider::httpGetCurl(const std::string& url,
+                                       const std::string& referer) {
+    CURL* curl = curl_easy_init();
+    if (!curl) return "";
+
+    std::string result;
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curlWriteCallback);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &result);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+
+    if (!referer.empty()) {
+        curl_easy_setopt(curl, CURLOPT_REFERER, referer.c_str());
+    }
+
+    struct curl_slist* headers = NULL;
+    headers = curl_slist_append(headers, "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
+    headers = curl_slist_append(headers, "Accept: */*");
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+
+    curl_easy_perform(curl);
+    curl_slist_free_all(headers);
+    curl_easy_cleanup(curl);
+
+    return result;
+}
+
+std::string SinaProvider::toEastMoneyCode(const std::string& code) {
+    std::string c = normalizeCode(code);
+    if (c.size() >= 2) {
+        if (c.substr(0, 2) == "sh") {
+            return "1." + c.substr(2);
+        } else if (c.substr(0, 2) == "sz") {
+            return "0." + c.substr(2);
+        }
+    }
+    if (c.size() == 6) {
+        if (c[0] == '6' || c[0] == '9') {
+            return "1." + c;
+        } else {
+            return "0." + c;
+        }
+    }
+    return c;
 }
 
 std::string SinaProvider::gbkToUtf8(const std::string& gbkStr) {
@@ -503,42 +558,62 @@ bool SinaProvider::getFundamentalData(const std::string& code,
                                       FundamentalData& data) {
     data.code = code;
 
+    std::string emCode = toEastMoneyCode(code);
+    std::string url = "http://push2.eastmoney.com/api/qt/stock/get?"
+                      "secid=" + emCode + "&fields=f57,f58,f162,f163,f167,f168,f170,f171,"
+                      "f173,f174,f175,f176,f177,f178,f179,f181,f184";
+
+    std::string resp = httpGet(url, "http://quote.eastmoney.com/");
+    if (!resp.empty()) {
+        if (parseEastMoneyFundamental(resp, data)) {
+            return true;
+        }
+    }
+
     std::string sinaCode = toSinaCode(code);
+    std::string quoteUrl = "http://hq.sinajs.cn/list=" + sinaCode;
+    std::string quoteResp = httpGet(quoteUrl, "https://finance.sina.com.cn");
+    if (!quoteResp.empty()) {
+        std::vector<RealtimeQuote> quotes;
+        std::vector<std::string> codes = { sinaCode };
+        if (parseSinaQuote(quoteResp, codes, quotes) && !quotes.empty()) {
+            if (!quotes[0].industry.empty()) {
+                data.industry = quotes[0].industry;
+            }
+            if (quotes[0].pe > 0) {
+                data.eps = quotes[0].price / quotes[0].pe;
+            }
+            data.total_share = quotes[0].total_mcap / quotes[0].price * 100.0;
+            data.float_share = quotes[0].float_mcap / quotes[0].price * 100.0;
+        }
+    }
 
-    data.roe = 12.5;
-    data.gross_margin = 35.0;
-    data.net_margin = 15.0;
-    data.dividend_yield = 2.5;
-    data.pe_percentile = 45.0;
-    data.debt_ratio = 45.0;
-    data.goodwill_ratio = 5.0;
-    data.roe_5y_avg = 14.0;
-    data.eps = 1.5;
-    data.total_share = 10000000000.0;
-    data.float_share = 8000000000.0;
-    data.industry = "综合行业";
+    if (data.industry.empty()) {
+        data.industry = "未知行业";
+    }
+    if (data.roa <= 0 && data.roe > 0) {
+        data.roa = data.roe * 0.8;
+    }
 
-    data.deduct_profit_3y = { 1.0, 1.15, 1.35 };
-    data.operating_cashflow = { 8.0, 9.5, 11.0 };
-    data.gross_margin_trend = { 32.0, 33.5, 35.0 };
-
-    return true;
+    return data.code == code;
 }
 
 bool SinaProvider::getFundFlow(const std::string& code,
                                FundFlowData& data) {
     data.code = code;
 
-    data.main_inflow = 5000000.0;
-    data.super_inflow = 2000000.0;
-    data.big_inflow = 3000000.0;
-    data.mid_inflow = 1500000.0;
-    data.small_inflow = -1000000.0;
-    data.northbound_shares = 50000000.0;
-    data.northbound_ratio = 2.5;
-    data.has_longhubang = false;
+    std::string emCode = toEastMoneyCode(code);
+    std::string url = "http://push2.eastmoney.com/api/qt/stock/get?"
+                      "secid=" + emCode + "&fields=f62,f184,f66,f69,f72,f75,f78,f81,f84,f87";
 
-    return true;
+    std::string resp = httpGet(url, "http://quote.eastmoney.com/");
+    if (!resp.empty()) {
+        if (parseEastMoneyFundFlow(resp, data)) {
+            return true;
+        }
+    }
+
+    return data.code == code;
 }
 
 bool SinaProvider::getStockFullData(const std::string& code,
@@ -577,6 +652,111 @@ bool SinaProvider::getStockFullData(const std::string& code,
     }
 
     return data.has_data;
+}
+
+bool SinaProvider::parseEastMoneyFundFlow(const std::string& response,
+                                         FundFlowData& data) {
+    if (response.empty()) return false;
+
+    json_utils::JsonParser parser(response);
+    json_utils::JsonValue root;
+    if (!parser.parse(root) || root.type != json_utils::JsonValue::OBJECT) {
+        return false;
+    }
+
+    auto it = root.obj_val.find("data");
+    if (it == root.obj_val.end() || it->second.type != json_utils::JsonValue::OBJECT) {
+        return false;
+    }
+
+    const auto& dataObj = it->second.obj_val;
+
+    auto getNum = [&dataObj](const std::string& key, double& out) -> bool {
+        auto itf = dataObj.find(key);
+        if (itf != dataObj.end() && itf->second.type == json_utils::JsonValue::NUMBER) {
+            out = itf->second.num_val;
+            return true;
+        }
+        return false;
+    };
+
+    getNum("f62", data.main_inflow);
+    getNum("f184", data.super_inflow);
+    getNum("f66", data.big_inflow);
+    getNum("f69", data.mid_inflow);
+    getNum("f72", data.small_inflow);
+
+    getNum("f84", data.northbound_shares);
+    getNum("f87", data.northbound_ratio);
+
+    auto itlb = dataObj.find("f78");
+    if (itlb != dataObj.end()) {
+        if (itlb->second.type == json_utils::JsonValue::NUMBER) {
+            data.has_longhubang = (itlb->second.num_val > 0);
+        }
+    }
+
+    return true;
+}
+
+bool SinaProvider::parseEastMoneyFundamental(const std::string& response,
+                                            FundamentalData& data) {
+    if (response.empty()) return false;
+
+    json_utils::JsonParser parser(response);
+    json_utils::JsonValue root;
+    if (!parser.parse(root) || root.type != json_utils::JsonValue::OBJECT) {
+        return false;
+    }
+
+    auto it = root.obj_val.find("data");
+    if (it == root.obj_val.end() || it->second.type != json_utils::JsonValue::OBJECT) {
+        return false;
+    }
+
+    const auto& dataObj = it->second.obj_val;
+
+    auto getNum = [&dataObj](const std::string& key, double& out) -> bool {
+        auto itf = dataObj.find(key);
+        if (itf != dataObj.end()) {
+            if (itf->second.type == json_utils::JsonValue::NUMBER) {
+                out = itf->second.num_val;
+                return true;
+            } else if (itf->second.type == json_utils::JsonValue::STRING) {
+                out = atof(itf->second.str_val.c_str());
+                return out != 0.0 || itf->second.str_val == "0";
+            }
+        }
+        return false;
+    };
+
+    auto getStr = [&dataObj](const std::string& key, std::string& out) -> bool {
+        auto itf = dataObj.find(key);
+        if (itf != dataObj.end() && itf->second.type == json_utils::JsonValue::STRING) {
+            out = itf->second.str_val;
+            return true;
+        }
+        return false;
+    };
+
+    getStr("f58", data.industry);
+    getNum("f162", data.total_share);
+    getNum("f163", data.float_share);
+    getNum("f167", data.roe);
+    getNum("f168", data.roa);
+    getNum("f170", data.gross_margin);
+    getNum("f171", data.net_margin);
+    getNum("f173", data.debt_ratio);
+    getNum("f174", data.dividend_yield);
+    getNum("f175", data.eps);
+    getNum("f176", data.pe);
+    getNum("f177", data.pb);
+    getNum("f178", data.price);
+    getNum("f179", data.market_capital);
+    getNum("f181", data.float_market_capital);
+    getNum("f184", data.turnover_rate);
+
+    return data.code == data.code;
 }
 
 }
