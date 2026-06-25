@@ -18,10 +18,12 @@ protected:
     double score(const StockFullData& data,
                  std::map<std::string, double>& details) override;
 
-    double calcFundamentalScore(const StockFullData& data) override;
+    //double calcFundamentalScore(const StockFullData& data) override;
     double calcValuationScore(const StockFullData& data) override;
     double calcTechnicalScore(const StockFullData& data) override;
     double calcCapitalScore(const StockFullData& data) override;
+    double calcGrowthScore(const StockFullData& data) override;
+    double calcQualityScore(const StockFullData& data) override;
 };
 
 }

@@ -135,10 +135,16 @@ std::string ApiHandler::handleStockDetail(const std::string& code) {
         return errorResponse(-1, "股票代码不能为空");
     }
 
+    fprintf(stderr, "[handleStockDetail] called with code: %s\n", code.c_str());
+
     StockFullData data;
     if (!provider_->getStockFullData(code, data)) {
+        fprintf(stderr, "[handleStockDetail] getStockFullData failed for: %s\n", code.c_str());
         return errorResponse(-1, "获取股票详情失败");
     }
+
+    fprintf(stderr, "[handleStockDetail] success - pe=%.2f, pb=%.2f, fund_flow.main=%.2f\n",
+            data.quote.pe, data.quote.pb, data.fund_flow.main_inflow);
 
     JsonWriter w;
     w.startObject();

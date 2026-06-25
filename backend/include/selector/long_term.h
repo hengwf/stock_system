@@ -20,8 +20,10 @@ protected:
 
     double calcFundamentalScore(const StockFullData& data) override;
     double calcValuationScore(const StockFullData& data) override;
+    double calcGrowthScore(const StockFullData& data) override;
+    double calcRiskScore(const StockFullData& data) override;
     double calcCapitalScore(const StockFullData& data) override;
-    double calcIndustryScore(const StockFullData& data) override;
+    double calcTechnicalScore(const StockFullData& data) override;
 };
 
 }

@@ -545,6 +545,7 @@ const App = {
   async loadStockDetailData(code) {
     try {
       const detail = await API.getStockDetail(code);
+      console.log('[DEBUG] getStockDetail response:', JSON.stringify(detail, null, 2));
       this.updateBasicInfo(detail);
       this.updateFundFlow(detail.fund_flow || {});
     } catch (err) {
@@ -583,14 +584,15 @@ const App = {
 
   updateFundFlow(fundFlow) {
     const grid = document.getElementById('fundFlowGrid');
+    const hasValue = v => v !== undefined && v !== null && !isNaN(v);
     const items = [
-      { label: '主力净流入', value: fundFlow.main_inflow ? (fundFlow.main_inflow / 10000).toFixed(2) + '万' : '--', color: fundFlow.main_inflow > 0 ? 'up' : fundFlow.main_inflow < 0 ? 'down' : '' },
-      { label: '超大单净流入', value: fundFlow.super_inflow ? (fundFlow.super_inflow / 10000).toFixed(2) + '万' : '--', color: fundFlow.super_inflow > 0 ? 'up' : fundFlow.super_inflow < 0 ? 'down' : '' },
-      { label: '大单净流入', value: fundFlow.big_inflow ? (fundFlow.big_inflow / 10000).toFixed(2) + '万' : '--', color: fundFlow.big_inflow > 0 ? 'up' : fundFlow.big_inflow < 0 ? 'down' : '' },
-      { label: '中单净流入', value: fundFlow.mid_inflow ? (fundFlow.mid_inflow / 10000).toFixed(2) + '万' : '--', color: fundFlow.mid_inflow > 0 ? 'up' : fundFlow.mid_inflow < 0 ? 'down' : '' },
-      { label: '小单净流入', value: fundFlow.small_inflow ? (fundFlow.small_inflow / 10000).toFixed(2) + '万' : '--', color: fundFlow.small_inflow > 0 ? 'up' : fundFlow.small_inflow < 0 ? 'down' : '' },
-      { label: '北向持股', value: fundFlow.northbound_shares ? (fundFlow.northbound_shares / 10000).toFixed(2) + '万股' : '--' },
-      { label: '北向占比', value: fundFlow.northbound_ratio ? fundFlow.northbound_ratio.toFixed(2) + '%' : '--' },
+      { label: '主力净流入', value: hasValue(fundFlow.main_inflow) ? (fundFlow.main_inflow / 10000).toFixed(2) + '万' : '--', color: fundFlow.main_inflow > 0 ? 'up' : fundFlow.main_inflow < 0 ? 'down' : '' },
+      { label: '超大单净流入', value: hasValue(fundFlow.super_inflow) ? (fundFlow.super_inflow / 10000).toFixed(2) + '万' : '--', color: fundFlow.super_inflow > 0 ? 'up' : fundFlow.super_inflow < 0 ? 'down' : '' },
+      { label: '大单净流入', value: hasValue(fundFlow.big_inflow) ? (fundFlow.big_inflow / 10000).toFixed(2) + '万' : '--', color: fundFlow.big_inflow > 0 ? 'up' : fundFlow.big_inflow < 0 ? 'down' : '' },
+      { label: '中单净流入', value: hasValue(fundFlow.mid_inflow) ? (fundFlow.mid_inflow / 10000).toFixed(2) + '万' : '--', color: fundFlow.mid_inflow > 0 ? 'up' : fundFlow.mid_inflow < 0 ? 'down' : '' },
+      { label: '小单净流入', value: hasValue(fundFlow.small_inflow) ? (fundFlow.small_inflow / 10000).toFixed(2) + '万' : '--', color: fundFlow.small_inflow > 0 ? 'up' : fundFlow.small_inflow < 0 ? 'down' : '' },
+      { label: '北向持股', value: hasValue(fundFlow.northbound_shares) && fundFlow.northbound_shares > 0 ? (fundFlow.northbound_shares / 10000).toFixed(2) + '万股' : '--' },
+      { label: '北向占比', value: hasValue(fundFlow.northbound_ratio) && fundFlow.northbound_ratio > 0 ? fundFlow.northbound_ratio.toFixed(2) + '%' : '--' },
       { label: '龙虎榜', value: fundFlow.has_longhubang ? '有' : '无' }
     ];
     grid.innerHTML = items.map(item => `

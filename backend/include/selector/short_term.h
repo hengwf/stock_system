@@ -21,6 +21,9 @@ protected:
     double calcTechnicalScore(const StockFullData& data) override;
     double calcCapitalScore(const StockFullData& data) override;
     double calcFundamentalScore(const StockFullData& data) override;
+    double calcValuationScore(const StockFullData& data) override;
+    double calcMomentumScore(const StockFullData& data);
+    double calcReversalScore(const StockFullData& data);
 };
 
 }

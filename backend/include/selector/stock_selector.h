@@ -34,6 +34,9 @@ protected:
     virtual double calcTechnicalScore(const StockFullData& data) { return 0; }
     virtual double calcCapitalScore(const StockFullData& data) { return 0; }
     virtual double calcIndustryScore(const StockFullData& data) { return 0; }
+	virtual double calcGrowthScore(const StockFullData& data) { return 0; }
+	virtual double calcQualityScore(const StockFullData& data) { return 0; }
+	virtual double calcRiskScore(const StockFullData& data) { return 0; }
 
     double linearScore(double value, double min_val, double max_val,
                        double max_score, bool reverse = false);

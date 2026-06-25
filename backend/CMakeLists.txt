@@ -22,8 +22,10 @@ include_directories(
 set(SOURCES
     src/main.cpp
     src/common/stock_data.cpp
+    src/common/risk_control.cpp
     src/datasource/sina_provider.cpp
     src/selector/stock_selector.cpp
+    src/selector/quant_selector.cpp
     src/selector/long_term.cpp
     src/selector/mid_term.cpp
     src/selector/short_term.cpp

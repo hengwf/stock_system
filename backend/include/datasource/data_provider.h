@@ -28,6 +28,9 @@ public:
 
     virtual bool getStockFullData(const std::string& code,
                                   StockFullData& data) = 0;
+
+    virtual bool getStockScreenData(const std::string& code,
+                                    StockFullData& data) = 0;
 };
 
 }

@@ -32,32 +32,30 @@ public:
     bool getStockFullData(const std::string& code,
                           StockFullData& data) override;
 
+    bool getStockScreenData(const std::string& code,
+                            StockFullData& data) override;
+
+    // 东方财富接口
+    bool getMarketListFromEM(std::vector<RealtimeQuote>& quotes);
+
 private:
     std::string httpGet(const std::string& url,
                         const std::string& referer = "");
 
-    bool parseSinaQuote(const std::string& response,
-                        const std::vector<std::string>& codes,
-                        std::vector<RealtimeQuote>& quotes);
-
     bool parseKlineJson(const std::string& response,
                         std::vector<KlineData>& klines);
 
-    bool parseEastMoneyFundFlow(const std::string& response,
-                                FundFlowData& data);
-
-    bool parseEastMoneyFundamental(const std::string& response,
-                                   FundamentalData& data);
+    std::string extractJsonField(const std::string& json, const std::string& field);
 
     std::string normalizeCode(const std::string& code);
 
     std::string toSinaCode(const std::string& code);
 
-    std::string toEastMoneyCode(const std::string& code);
-
-    std::string gbkToUtf8(const std::string& gbkStr);
-
     bool calculateTechnicalIndicators(TechnicalData& tech);
+
+    // 获取单个市场的股票列表（用于多线程）
+    void fetchMarketPage(const std::string& market, int page, int pageSize,
+                         std::vector<RealtimeQuote>& result, std::mutex& resultMutex);
 
     std::mutex mutex_;
     std::map<std::string, RealtimeQuote> stock_list_cache_;

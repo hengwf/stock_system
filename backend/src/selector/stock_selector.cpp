@@ -25,7 +25,7 @@ bool StockSelector::select(const std::vector<std::string>& codes,
                            std::vector<SelectorResult>& results) {
     results.clear();
 
-    const int maxPreFilter = 800;
+    const int maxPreFilter = 500;
     std::vector<std::string> workCodes;
     
     if ((int)codes.size() <= maxPreFilter) {
@@ -47,7 +47,7 @@ bool StockSelector::select(const std::vector<std::string>& codes,
     std::vector<bool> dataOk(workCodes.size(), false);
     std::atomic<int> nextIdx(0);
 
-    int numThreads = 4;
+    int numThreads = 12;
     std::vector<std::thread> threads;
     for (int t = 0; t < numThreads; t++) {
         threads.emplace_back([&]() {
@@ -56,7 +56,7 @@ bool StockSelector::select(const std::vector<std::string>& codes,
                 if (idx >= (int)workCodes.size()) break;
                 
                 StockFullData data;
-                if (provider_->getStockFullData(workCodes[idx], data)) {
+                if (provider_->getStockScreenData(workCodes[idx], data)) {
                     allData[idx] = data;
                     dataOk[idx] = true;
                 }
